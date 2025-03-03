@@ -5,10 +5,14 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ShoppingOutlined,
+  LoginOutlined
+
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
-import { Breadcrumb, Layout, Menu, theme, Button } from "antd";
+import { Breadcrumb, Layout, Menu, theme, Button, Dropdown, Avatar } from "antd";
 import Link from "next/link";
+// import router from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -62,11 +66,51 @@ interface Props {
   children: ReactNode;
 }
 
+
+
+
 const DashboardLayout: React.FC<Props> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+  const router = useRouter();
+
+  const logOut = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+  
+      const data = await res.json();
+  
+      if (res.ok) {
+        console.log(data);
+        localStorage.removeItem("user");
+        router.push("/login");
+      } else {
+        console.log(data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  
+
+  const menuItems: MenuProps['items'] = [
+    {
+      key: '3',
+      label: (
+        <button onClick={()=> logOut()} className="text-red-500 flex items-center gap-2" type="button">
+          <LoginOutlined />
+          <span>Log out</span>
+        </button>
+      ),
+    },
+  ];
+
+  const user = localStorage?.getItem("user") ? JSON.parse(localStorage.getItem("user") as string) : null;
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -85,7 +129,7 @@ const DashboardLayout: React.FC<Props> = ({ children }) => {
         />
       </Sider>
       <Layout>
-        <Header style={{ padding: 0, background: colorBgContainer }}>
+        <Header className="flex justify-between" style={{ padding: 0, background: colorBgContainer }}>
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -96,6 +140,16 @@ const DashboardLayout: React.FC<Props> = ({ children }) => {
               height: 64,
             }}
           />
+          <div className="pr-10">
+
+            <Dropdown menu={{ items: menuItems }} placement="bottomRight">
+              <div className="flex items-center gap-2">
+                <Avatar size="large" icon={<UserOutlined />} />
+                <p>{user?.name}</p>
+              </div>
+            </Dropdown>
+
+          </div>
         </Header>
         <Content style={{ margin: "0 16px" }}>
           <Breadcrumb style={{ margin: "16px 0" }}>
